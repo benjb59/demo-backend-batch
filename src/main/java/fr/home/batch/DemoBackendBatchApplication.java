@@ -1,8 +1,6 @@
 package fr.home.batch;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
+import fr.home.batch.domain.Questionnaire;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
@@ -16,44 +14,52 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-
 import org.springframework.web.client.RestTemplate;
 
-import fr.home.batch.domain.Questionnaire;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 @SpringBootApplication
-public class DemoBackendBatchApplication implements CommandLineRunner{
+public class DemoBackendBatchApplication implements CommandLineRunner {
 
-	private static final Logger log = LoggerFactory.getLogger(DemoBackendBatchApplication.class);
+    private static final Logger log = LoggerFactory.getLogger(DemoBackendBatchApplication.class);
 
-	@Autowired
-	private ResourceLoader resourceLoader;
+    private final long NB_QUESTIONNAIRES = 1000;
 
-	@Autowired
-	private RestTemplate restTemplate;
+    @Autowired
+    private ResourceLoader resourceLoader;
 
-	public static void main(String[] args) {
-		SpringApplication.run(DemoBackendBatchApplication.class, args);
-	}
+    @Autowired
+    private RestTemplate restTemplate;
 
-	@Override
-	public void run(String... args) throws Exception {
+    public static void main(String[] args) {
+        SpringApplication.run(DemoBackendBatchApplication.class, args);
+    }
 
-		Resource res = resourceLoader.getResource("classpath:questionnaire.json");
+    @Override
+    public void run(String... args) throws Exception {
 
-		JSONParser parser = new JSONParser();
-		JSONObject data=(JSONObject) parser.parse(new BufferedReader(new InputStreamReader(res.getInputStream())));
+        Resource res = resourceLoader.getResource("classpath:questionnaire.json");
 
-		Questionnaire questionnaire = new Questionnaire();
+        JSONParser parser = new JSONParser();
+        JSONObject data = (JSONObject) parser.parse(new BufferedReader(new InputStreamReader(res.getInputStream())));
 
-		questionnaire.setId("A0000002");
-		questionnaire.setData(data);
+        for (int i = 1; i <= NB_QUESTIONNAIRES; i++) {
 
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_JSON);
+            Questionnaire questionnaire = new Questionnaire();
 
-		HttpEntity<Questionnaire> request = new HttpEntity<Questionnaire>(questionnaire, headers);
+            questionnaire.setId(String.format("%08d", i));
+            questionnaire.setData(data);
 
-		restTemplate.postForEntity("https://demo-backend-mongo.dev.insee.io/questionnaires", request, String.class);
-	}
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<Questionnaire> request = new HttpEntity<Questionnaire>(questionnaire, headers);
+
+            log.info("Chargement questionnaire " + questionnaire.getId());
+
+            restTemplate.postForEntity("https://demo-backend-mongo.dev.insee.io/questionnaires", request, String.class);
+
+        }
+    }
 }
