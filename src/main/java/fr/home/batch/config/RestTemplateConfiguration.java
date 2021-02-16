@@ -23,8 +23,6 @@ public class RestTemplateConfiguration {
 
     @Bean
 	public RestTemplate restTemplate(RestTemplateBuilder builder) {
-        System.out.println(proxyHost);
-        System.out.println(proxyPort);
 		if (proxyHost!=null && proxyPort!=0) {
 			Proxy proxy = new Proxy(Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
 			SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
